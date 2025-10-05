@@ -76,7 +76,7 @@ char *get_long_file_input(FILE *fp, char end_char) {
 
     while (1) {
         ch = fgetc(fp);
-        if (ch == end_char || ch == EOF || ch == '\n') break;
+        if (ch == end_char || ch == EOF || ch == '\n' || ch == '\r') break;
 
         str[len++] = ch;
 
