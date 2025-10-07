@@ -1,4 +1,9 @@
 #include "resolver_lib.h"
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <arpa/inet.h>
+#include <netdb.h>
 
 int main(int argc, char *argv[])
 {
@@ -15,17 +20,16 @@ int main(int argc, char *argv[])
         // reverse DNS lookup
         char *domain = reverse_DNS_lookup(ipv4);
         if (domain != NULL) {
-            printf("Result: \n %s", domain);
-            free(domain);
+            printf("Result: \n%s\n", domain);
         } else {
-            printf("Not found information");
+            printf("Not found information\n");
         }
         free(ipv4);
     } else {
         // resolve domain to IPv4 addresses
-        Ipv4AddressList list = resolve_domain(input);
+        struct Ipv4AddressList list = resolve_domain(input);
         if (list.count == 0) {
-            printf("Not found information");
+            printf("Not found information\n");
         } else {
             printf("Result: \n");
             for (int i = 0; i < list.count; i++) {

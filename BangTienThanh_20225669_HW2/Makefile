@@ -5,10 +5,10 @@ CC = gcc
 CFLAGS = -std=c11 -Wall -Wextra -g
 
 # Tên file thực thi
-TARGET = main.exe
+TARGET = resolver
 
 # Các file nguồn
-SRCS = main.c utils.c
+SRCS = resolver.c resolver_lib.c
 
 # File đối tượng (tự động chuyển từ .c sang .o)
 OBJS = $(SRCS:.c=.o)
