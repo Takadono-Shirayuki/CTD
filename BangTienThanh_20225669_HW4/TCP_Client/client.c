@@ -21,22 +21,7 @@ int main(int argc, char *argv[]) {
     char *ip = argv[1];
     int port = atoi(argv[2]);
 
-    int sock = socket(AF_INET, SOCK_STREAM, 0);
-    if (sock < 0) error_exit("socket");
-
-    struct sockaddr_in server_addr;
-    server_addr.sin_family = AF_INET;
-    server_addr.sin_port = htons(port);
-    inet_pton(AF_INET, ip, &server_addr.sin_addr);
-
-    if (connect(sock, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0)
-        error_exit("connect");
-
     char buffer[BUFFER_SIZE];
-    int bytes_received = recv(sock, buffer, sizeof(buffer) - 1, 0);
-    if (bytes_received <= 0) error_exit("recv");
-    buffer[bytes_received] = '\0';
-    printf("Server: %s\n", buffer);
 
     while (1) {
         char filepath[1024];
@@ -46,9 +31,36 @@ int main(int argc, char *argv[]) {
 
         if (strlen(filepath) == 0) break;
 
+        int sock = socket(AF_INET, SOCK_STREAM, 0);
+        if (sock < 0) {
+            perror("socket");
+            continue;
+        }
+
+        struct sockaddr_in server_addr;
+        server_addr.sin_family = AF_INET;
+        server_addr.sin_port = htons(port);
+        inet_pton(AF_INET, ip, &server_addr.sin_addr);
+
+        if (connect(sock, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
+            perror("connect");
+            close(sock);
+            continue;
+        }
+
+        int bytes_received = recv(sock, buffer, sizeof(buffer) - 1, 0);
+        if (bytes_received <= 0) {
+            perror("recv");
+            close(sock);
+            continue;
+        }
+        buffer[bytes_received] = '\0';
+        printf("Server: %s\n", buffer);
+
         FILE *fp = fopen(filepath, "rb");
         if (!fp) {
             perror("Failed to open file");
+            close(sock);
             continue;
         }
 
@@ -65,13 +77,16 @@ int main(int argc, char *argv[]) {
         bytes_received = recv(sock, buffer, sizeof(buffer) - 1, 0);
         if (bytes_received <= 0) {
             fclose(fp);
-            error_exit("recv");
+            printf("Connection closed by server.\n");
+            close(sock);
+            continue;
         }
         buffer[bytes_received] = '\0';
         printf("Server: %s\n", buffer);
 
         if (strncmp(buffer, "+OK", 3) != 0) {
             fclose(fp);
+            close(sock);
             continue;
         }
 
@@ -93,11 +108,16 @@ int main(int argc, char *argv[]) {
         fclose(fp);
 
         bytes_received = recv(sock, buffer, sizeof(buffer) - 1, 0);
-        if (bytes_received <= 0) error_exit("recv");
+        if (bytes_received <= 0) {
+            printf("Connection closed by server.\n");
+            close(sock);
+            continue;
+        }
         buffer[bytes_received] = '\0';
         printf("Server: %s\n", buffer);
+
+        close(sock);
     }
 
-    close(sock);
     return 0;
 }
