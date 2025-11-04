@@ -5,6 +5,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <errno.h>
+#include <limits.h>
 #include <unistd.h>
 #include <ctype.h>
 #include <arpa/inet.h>
@@ -62,6 +63,17 @@ static void trim_line(char *s) {
  */
 int load_accounts(const char *filename) {
     FILE *f = fopen(filename, "r");
+    char altpath[PATH_MAX];
+    /* If opening the given filename fails, try the TCP_Server/ subfolder.
+     * This allows running the program from the repository root while the
+     * account file remains in the TCP_Server directory next to server.c.
+     */
+    if (!f) {
+        int ret = snprintf(altpath, sizeof(altpath), "TCP_Server/%s", filename);
+        if (ret >= 0 && (size_t)ret < sizeof(altpath)) {
+            f = fopen(altpath, "r");
+        }
+    }
     if (!f) return -1;
     char line[256];
     account_count = 0;
